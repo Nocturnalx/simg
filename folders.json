@@ -1,0 +1,10 @@
+[
+    {
+        "name": "wiki",
+        "path": "./images/wiki"
+    },
+    {
+        "name": "boards",
+        "path": "./images/boards"
+    }
+]
