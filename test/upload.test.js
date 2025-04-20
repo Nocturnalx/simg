@@ -3,11 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const app = require('../lib/exp'); // This imports the same app instance
 
-describe('POST /upload/:folder', () => {
+const {baseDir} = require('../lib/config');
+
+describe('POST /upload/:folder -> GET /image/:folder/:name', () => {
     const folder = 'test-folder';
     const filename = 'test-image.jpg';
     const testData = Buffer.from('fake image data from string.');
-    const testPath = path.join(__dirname, '..', 'images', folder, filename);
+    const testPath = path.join(baseDir, folder, filename);
 
     before(() => { if (fs.existsSync(testPath)) fs.unlinkSync(testPath); });
     after(() => { if (fs.existsSync(testPath)) fs.unlinkSync(testPath); });
@@ -40,5 +42,43 @@ describe('POST /upload/:folder', () => {
                 if (!res.body.equals(testData)) throw new Error('downloaded file does not match uploaded data.');
             })
             .end(done);
+    });
+});
+
+describe('GET /image/:folder/:name with an invalid name', () => {
+    it('sholud return 404 and serve the fallback image when *folder and file* dont exist.', done => {
+        request(app)
+            .get('/image/adwoiahd/awdawd')
+            .expect(404)
+            .expect('Content-Type', /image\/png/)
+            .end((err, res) => {
+                if (err) return done(err);
+
+				const fallbackPath = path.join(baseDir, 'fallback', 'fb.png');
+				const fallbackBuffer = fs.readFileSync(fallbackPath);
+				if (!res.body.equals(fallbackBuffer)) {
+					return done(new Error('Response does not match fallback image'));
+				}
+
+				done();
+            });
+    });
+
+    it('sholud return 404 and serve the fallback image when *file* doesnt exist but folder (test-folder) does.', done => {
+        request(app)
+            .get('/image/test-folder/awdawd')
+            .expect(404)
+            .expect('Content-Type', /image\/png/)
+            .end((err, res) => {
+                if (err) return done(err);
+
+				const fallbackPath = path.join(baseDir, 'fallback', 'fb.png');
+				const fallbackBuffer = fs.readFileSync(fallbackPath);
+				if (!res.body.equals(fallbackBuffer)) {
+					return done(new Error('Response does not match fallback image'));
+				}
+
+				done();
+            });
     });
 });
