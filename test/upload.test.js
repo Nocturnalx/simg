@@ -64,7 +64,7 @@ describe('POST /upload/:folder', () => {
         if (fs.existsSync(invalidTestPath)) fs.unlinkSync(invalidTestPath); 
     });
 
-	it('should reject upload to an invalid folder', async () => {
+	it('should reject upload to an invalid folder (400) {error: Invalid upload folder}', async () => {
 		const res = await request(app)
 			.post(`/upload/${invalidFolder}`)
 			.set('x-filename', filename)
@@ -75,7 +75,7 @@ describe('POST /upload/:folder', () => {
 		assert.strictEqual(res.body.error, 'Invalid upload folder');
 	});
 
-	it('should reject upload without x-filename header', async () => {
+	it('should reject upload without x-filename header (400) {error: Missing filename}', async () => {
 		const res = await request(app)
 			.post(`/upload/${validFolder}`)
             .set('x-api-key', API_KEY)
@@ -85,10 +85,21 @@ describe('POST /upload/:folder', () => {
 		assert.strictEqual(res.body.error, 'Missing filename');
 	});
 	
-    it('should reject upload without x-api-key header', async () => {
+    it('should reject upload without x-api-key header (403) {error: Unauthorised upload attempt}', async () => {
 		const res = await request(app)
 			.post(`/upload/${validFolder}`)
             .set('x-filename', filename)
+			.send(testData);
+
+		assert.strictEqual(res.status, 403);
+		assert.strictEqual(res.body.error, 'Unauthorised upload attempt');
+	});
+
+    it('should reject upload with invalid x-api-key header (403) {error: Unauthorised upload attempt}', async () => {
+		const res = await request(app)
+			.post(`/upload/${validFolder}`)
+            .set('x-filename', filename)
+            .set('x-api-key', "invalid_API_key")
 			.send(testData);
 
 		assert.strictEqual(res.status, 403);
@@ -98,7 +109,7 @@ describe('POST /upload/:folder', () => {
 
 
 describe('GET /image/:folder/:name with an invalid name', () => {
-    it('sholud return 404 and serve the fallback image when *folder and file* dont exist.', done => {
+    it('sholud serve the fallback image when *folder and file* dont exist (404)', done => {
         request(app)
             .get('/image/adwoiahd/awdawd')
             .expect(404)
@@ -116,7 +127,7 @@ describe('GET /image/:folder/:name with an invalid name', () => {
             });
     });
 
-    it('sholud return 404 and serve the fallback image when *file* doesnt exist but folder (test-folder) does.', done => {
+    it('sholud serve the fallback image when *file* doesnt exist but folder (test-folder) does (404)', done => {
         request(app)
             .get('/image/test-folder/awdawd')
             .expect(404)
