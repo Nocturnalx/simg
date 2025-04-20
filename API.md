@@ -8,21 +8,23 @@ headers: {
 }
 ```
 #### 200
-```
-{
-    name: "String"
-}
-```
-#### 40x
-
-#### 50x
-
+```{ name: "String" }```
+#### 400
+no x-filename header
+```{error: 'missing filename}```
+#### 403
+missing/incorrect api-key
+```{error: 'unauthorised upload attempt'}```
+#### 500
+```{error: 'failed to save image'}```
 ----
-
 ### /image/:folder/:name - GET
 
 #### 200
 image
 
 #### 404
-backup image
+fallback image
+
+#### 500
+```{error: 'server error'}```
