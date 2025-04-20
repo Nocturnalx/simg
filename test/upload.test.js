@@ -1,7 +1,8 @@
 const request = require('supertest');
 const fs = require('fs');
 const path = require('path');
-const app = require('../lib/exp'); // This imports the same app instance
+const app = require('../lib/app');
+require('dotenv').config();
 
 const {baseDir} = require('../lib/config');
 
@@ -11,6 +12,8 @@ describe('POST /upload/:folder -> GET /image/:folder/:name', () => {
     const testData = Buffer.from('fake image data from string.');
     const testPath = path.join(baseDir, folder, filename);
 
+    const API_KEY = process.env.API_KEY;
+
     before(() => { if (fs.existsSync(testPath)) fs.unlinkSync(testPath); });
     after(() => { if (fs.existsSync(testPath)) fs.unlinkSync(testPath); });
 
@@ -18,6 +21,7 @@ describe('POST /upload/:folder -> GET /image/:folder/:name', () => {
         request(app)
             .post(`/upload/${folder}`)
             .set('x-filename', filename)
+            .set('x-api-key', API_KEY)
             .set('Content-Type', 'application/octet-stream')
             .send(testData)
             .expect(200)

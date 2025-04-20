@@ -1,10 +1,10 @@
 # Images API documentation
-## in
 ### /upload/:folder - POST
 ```
 headers: {
     'Content-Type': 'application/octet-stream',
-    'X-Filename': 'fileName',
+    'x-filename': 'fileName',
+    'x-api-key': 'key'
 }
 ```
 #### 200
@@ -19,7 +19,6 @@ headers: {
 
 ----
 
-## out
 ### /image/:folder/:name - GET
 
 #### 200
