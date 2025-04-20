@@ -1,11 +1,11 @@
 {
-  "name": "image",
+  "name": "simg",
   "version": "1.0.0",
   "description": "Simple image storage server as a stand-in for image storage microservices.",
   "license": "ISC",
   "author": "nocturnal",
   "type": "commonjs",
-  "main": "image.js",
+  "main": "main.js",
   "scripts": {
     "test": "mocha"
   },
