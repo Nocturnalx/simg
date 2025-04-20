@@ -12,25 +12,29 @@ headers: {
 
 #### 200
 
-```{ name: "String" }```
+```{ name: "<filename.ext>" }```
 
 #### 400
 
 no x-filename header
 
-```{error: 'missing filename}```
+```{error: 'Missing filename}```
+
+attempt to upload to folder not included in FOLDERS environment variable
+
+```{error: 'Invalid upload folder'}```
 
 #### 403
 
 missing/incorrect api-key
 
-```{error: 'unauthorised upload attempt'}```
+```{error: 'Unauthorised upload attempt'}```
 
 #### 500
 
 server error
 
-```{error: 'failed to save image'}```
+```{error: 'Server error: failed to save image'}```
 
 ----
 
@@ -46,4 +50,4 @@ fallback image
 
 #### 500
 
-```{error: 'server error'}```
+```{error: 'Server error'}```
