@@ -1,18 +1,20 @@
 const request = require('supertest');
 const fs = require('fs');
 const path = require('path');
+const assert = require('assert');
 const app = require('../lib/app');
 require('dotenv').config();
 
 const {baseDir} = require('../lib/config');
 
-describe('POST /upload/:folder -> GET /image/:folder/:name', () => {
+const API_KEY = process.env.API_KEY;
+
+
+describe('Valid (POST /upload/:folder -> GET /image/:folder/:name) flow', () => {
     const folder = 'test-folder';
     const filename = 'test-image.jpg';
     const testData = Buffer.from('fake image data from string.');
     const testPath = path.join(baseDir, folder, filename);
-
-    const API_KEY = process.env.API_KEY;
 
     before(() => { if (fs.existsSync(testPath)) fs.unlinkSync(testPath); });
     after(() => { if (fs.existsSync(testPath)) fs.unlinkSync(testPath); });
@@ -48,6 +50,52 @@ describe('POST /upload/:folder -> GET /image/:folder/:name', () => {
             .end(done);
     });
 });
+
+describe('POST /upload/:folder', () => {
+    const validFolder = 'test-folder';
+	const invalidFolder = 'notallowed';
+    const filename = 'test-image.jpg';
+    const testData = Buffer.from('fake image data from string.');
+    const testPath = path.join(baseDir, validFolder, filename);
+    const invalidTestPath = path.join(baseDir, invalidFolder, filename);
+
+    after(() => { 
+        if (fs.existsSync(testPath)) fs.unlinkSync(testPath); 
+        if (fs.existsSync(invalidTestPath)) fs.unlinkSync(invalidTestPath); 
+    });
+
+	it('should reject upload to an invalid folder', async () => {
+		const res = await request(app)
+			.post(`/upload/${invalidFolder}`)
+			.set('x-filename', filename)
+            .set('x-api-key', API_KEY)
+			.send(testData);
+
+		assert.strictEqual(res.status, 400);
+		assert.strictEqual(res.body.error, 'Invalid upload folder');
+	});
+
+	it('should reject upload without x-filename header', async () => {
+		const res = await request(app)
+			.post(`/upload/${validFolder}`)
+            .set('x-api-key', API_KEY)
+			.send(testData);
+
+		assert.strictEqual(res.status, 400);
+		assert.strictEqual(res.body.error, 'Missing filename');
+	});
+	
+    it('should reject upload without x-api-key header', async () => {
+		const res = await request(app)
+			.post(`/upload/${validFolder}`)
+            .set('x-filename', filename)
+			.send(testData);
+
+		assert.strictEqual(res.status, 403);
+		assert.strictEqual(res.body.error, 'Unauthorised upload attempt');
+	});
+});
+
 
 describe('GET /image/:folder/:name with an invalid name', () => {
     it('sholud return 404 and serve the fallback image when *folder and file* dont exist.', done => {
