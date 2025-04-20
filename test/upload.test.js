@@ -5,6 +5,9 @@ const assert = require('assert');
 const app = require('../lib/app');
 require('dotenv').config();
 
+//make sure test folder exists
+require('../lib/folders').checkFolders(['test-folder']);
+
 const {baseDir} = require('../lib/config');
 
 const API_KEY = process.env.API_KEY;
