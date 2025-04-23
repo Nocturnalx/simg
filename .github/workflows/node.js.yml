@@ -32,5 +32,6 @@ jobs:
       run: |
         echo "FOLDERS=test-folder" > .env
         echo "API_KEY=fake-api-key-for-testing" >> .env
+        echo "PORT=3004" >> .env
     
     - run: npm test
