@@ -66,10 +66,7 @@ describe('Full flow: (POST /upload/:folder -> GET /image/:folder/:name -> POST /
             })
             .end(err => {
                 if (err) return done(err);
-    
-                // Check that the file really was deleted
-                const filepath = path.join(baseDir, folder, filename);
-                if (fs.existsSync(filepath)) {
+                if (fs.existsSync(testPath)) {
                     return done(new Error('File still exists after delete.'));
                 }
                 done();
