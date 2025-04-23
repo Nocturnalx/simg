@@ -8,7 +8,7 @@ checkFolders(folders);
 
 
 //create express app and set port to listen
-const app = require('./lib/app');
+const app = require('./app');
 const PORT = 3004;
 
 app.listen(PORT, ()=>{
