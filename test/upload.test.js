@@ -2,7 +2,7 @@ const request = require('supertest');
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-const app = require('../lib/app');
+const app = require('../app');
 require('dotenv').config();
 
 //make sure test folder exists
@@ -13,7 +13,7 @@ const {baseDir} = require('../lib/config');
 const API_KEY = process.env.API_KEY;
 
 
-describe('Valid (POST /upload/:folder -> GET /image/:folder/:name) flow', () => {
+describe('Full flow: (POST /upload/:folder -> GET /image/:folder/:name -> POST /remove/:folder/:name)', () => {
     const folder = 'test-folder';
     const filename = 'test-image.jpg';
     const testData = Buffer.from('fake image data from string.');
@@ -51,6 +51,29 @@ describe('Valid (POST /upload/:folder -> GET /image/:folder/:name) flow', () => 
                 if (!res.body.equals(testData)) throw new Error('downloaded file does not match uploaded data.');
             })
             .end(done);
+    });
+    
+    it('should delete the uploaded file successfully', done => {
+        request(app)
+            .delete(`/remove/${folder}/${filename}`)
+            .set('x-api-key', API_KEY)
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .expect(res => {
+                if (!res.body.message.includes('successfully deleted')) {
+                    throw new Error('File was not deleted successfully.');
+                }
+            })
+            .end(err => {
+                if (err) return done(err);
+    
+                // Check that the file really was deleted
+                const filepath = path.join(baseDir, folder, filename);
+                if (fs.existsSync(filepath)) {
+                    return done(new Error('File still exists after delete.'));
+                }
+                done();
+            });
     });
 });
 

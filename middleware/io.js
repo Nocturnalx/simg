@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const validFolders = process.env.FOLDERS.split(',');
 
-const {baseDir} = require('../config');
+const {baseDir} = require('../lib/config');
 
 exports.upload = async (req, res) => {
     try {
