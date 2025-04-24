@@ -21,7 +21,6 @@ exports.remove = async (req, res, next) => {
 
         // Get and verify the filename
         const filename = req.params.name;
-        if (!filename) throw new InvalidFilenameError();
 
         // Set the file path
         const filepath = path.join(baseDir, folder, filename);
