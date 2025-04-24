@@ -2,27 +2,33 @@ const path = require("path");
 const fs = require("fs");
 require('dotenv').config();
 
+const {
+    InvalidFolderError,
+    MissingFilenameError,
+    FileNotFoundError
+} = require('../config/errors');
+
 const validFolders = process.env.FOLDERS.split(',');
 
-const {baseDir} = require('../lib/config');
+const {baseDir} = require('../config/config');
 
 
-exports.remove = async (req, res) => {
+exports.remove = async (req, res, next) => {
     try {
         // Get and verify the folder
         const folder = req.params.folder;
-        if (!validFolders.includes(folder)) return res.status(400).json({error: 'Invalid folder'});
+        if (!validFolders.includes(folder)) throw new InvalidFolderError();
 
         // Get and verify the filename
         const filename = req.params.name;
-        if (!filename) return res.status(400).json({error: 'Missing filename'});
+        if (!filename) throw new MissingFilenameError();
 
         // Set the file path
         const filepath = path.join(baseDir, folder, filename);
 
         // Check if the file exists
         if (!fs.existsSync(filepath)) {
-            return res.status(404).json({error: 'File not found'});
+            throw new FileNotFoundError();
         }
 
         // Delete the file
@@ -30,7 +36,6 @@ exports.remove = async (req, res) => {
 
         res.json({message: `File ${filename} successfully deleted`});
     } catch (err) {
-        console.error('Delete error:', err);
-        res.status(500).json({error: 'Server error: failed to delete image'});
+        next(err);
     }
 };

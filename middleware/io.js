@@ -3,19 +3,24 @@ const fs = require("fs");
 const { pipeline } = require('stream/promises');
 require('dotenv').config();
 
+const {
+    InvalidFolderError,
+    MissingFilenameError,
+} = require('../config/errors');
+
 const validFolders = process.env.FOLDERS.split(',');
 
-const {baseDir} = require('../lib/config');
+const {baseDir} = require('../config/config');
 
-exports.upload = async (req, res) => {
+exports.upload = async (req, res, next) => {
     try {
         //get + verify folder
         const folder = req.params.folder;
-        if (!validFolders.includes(folder)) return res.status(400).json({error: 'Invalid upload folder'});
+        if (!validFolders.includes(folder)) throw new InvalidFolderError(); 
         
         //get + verify filename
         const filename = req.headers['x-filename'];
-        if (!filename) return res.status(400).json({error: 'Missing filename'});
+        if (!filename) throw new MissingFilenameError();
 
         //write to file
         const filepath = path.join(baseDir, folder, filename);
@@ -24,12 +29,11 @@ exports.upload = async (req, res) => {
 
         res.json({name: filename});
     } catch (err) {
-        console.error('Upload error:', err);
-        res.status(500).json({error: 'Server error: failed to save image'});
+        next(err);
     }
 }
 
-exports.download = (req, res) => {
+exports.download = (req, res, next) => {
     try {
         const { folder, name } = req.params;
         const filepath = path.join(baseDir, folder, name);
@@ -43,6 +47,6 @@ exports.download = (req, res) => {
         });
 
     } catch (err) {
-        return res.status(500).json({error: 'Server error'});
+        next(err);
     }
 };
