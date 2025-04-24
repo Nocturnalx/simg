@@ -22,10 +22,10 @@ class InvalidFolderError extends Error{
     }
 }
 
-class MissingFilenameError extends Error{
+class InvalidFilenameError extends Error{
     constructor(message) {
         super(message);
-        this.name = "MissingFilenameError";
+        this.name = "InvalidFilenameError";
 
         this.status = 400;
         this.response = "Invalid file name";
@@ -50,6 +50,6 @@ class FileNotFoundError extends Error{
 module.exports = {
     InvalidAPIKeyError,
     InvalidFolderError,
-    MissingFilenameError,
+    InvalidFilenameError,
     FileNotFoundError
 }

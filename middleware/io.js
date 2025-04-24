@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const {
     InvalidFolderError,
-    MissingFilenameError,
+    InvalidFilenameError,
 } = require('../config/errors');
 
 const validFolders = process.env.FOLDERS.split(',');
@@ -20,7 +20,7 @@ exports.upload = async (req, res, next) => {
         
         //get + verify filename
         const filename = req.headers['x-filename'];
-        if (!filename) throw new MissingFilenameError();
+        if (!filename) throw new InvalidFilenameError();
 
         //write to file
         const filepath = path.join(baseDir, folder, filename);
