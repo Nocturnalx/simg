@@ -75,130 +75,146 @@ describe('Full flow: (POST /upload/:folder -> GET /image/:folder/:name -> POST /
 });
 
 describe('POST /upload/:folder', () => {
-    const validFolder = 'test-folder';
+	const validFolder = 'test-folder';
 	const invalidFolder = 'notallowed';
-    const filename = 'test-image.jpg';
-    const testData = Buffer.from('fake image data from string.');
-    const testPath = path.join(baseDir, validFolder, filename);
-    const invalidTestPath = path.join(baseDir, invalidFolder, filename);
+	const filename = 'test-image.jpg';
+	const testData = Buffer.from('fake image data from string.');
+	const testPath = path.join(baseDir, validFolder, filename);
+	const invalidTestPath = path.join(baseDir, invalidFolder, filename);
 
-    after(() => { 
-        if (fs.existsSync(testPath)) fs.unlinkSync(testPath); 
-        if (fs.existsSync(invalidTestPath)) fs.unlinkSync(invalidTestPath); 
-    });
+	after(() => {
+		if (fs.existsSync(testPath)) fs.unlinkSync(testPath);
+		if (fs.existsSync(invalidTestPath)) fs.unlinkSync(invalidTestPath);
+	});
 
-	it('should reject upload to an invalid folder (400)', async () => {
-		const res = await request(app)
+	it('should reject upload to an invalid folder (400)', done => {
+		request(app)
 			.post(`/upload/${invalidFolder}`)
 			.set('x-filename', filename)
-            .set('x-api-key', API_KEY)
-			.send(testData);
-
-		assert.strictEqual(res.status, 400);
-		assert.strictEqual(res.body.code, 'INVFLDR');
+			.set('x-api-key', API_KEY)
+			.set('Content-Type', 'application/octet-stream')
+			.send(testData)
+			.expect(400)
+			.expect(res => {
+				if (res.body.code !== 'INVFLDR') throw new Error('Expected INVFLDR error code');
+			})
+			.end(done);
 	});
 
-	it('should reject upload without x-filename header (400)', async () => {
-		const res = await request(app)
+	it('should reject upload without x-filename header (400)', done => {
+		request(app)
 			.post(`/upload/${validFolder}`)
-            .set('x-api-key', API_KEY)
-			.send(testData);
-
-		assert.strictEqual(res.status, 400);
-		assert.strictEqual(res.body.code, 'INVNAME');
-	});
-	
-    it('should reject upload with NO x-api-key header (403) ', async () => {
-		const res = await request(app)
-			.post(`/upload/${validFolder}`)
-            .set('x-filename', filename)
-			.send(testData);
-
-		assert.strictEqual(res.status, 403);
-		assert.strictEqual(res.body.code, 'INVKEY');
+			.set('x-api-key', API_KEY)
+			.set('Content-Type', 'application/octet-stream')
+			.send(testData)
+			.expect(400)
+			.expect(res => {
+				if (res.body.code !== 'INVNAME') throw new Error('Expected INVNAME error code');
+			})
+			.end(done);
 	});
 
-    it('should reject upload with INVALID x-api-key header (403)', async () => {
-		const res = await request(app)
+	it('should reject upload with NO x-api-key header (403)', done => {
+		request(app)
 			.post(`/upload/${validFolder}`)
-            .set('x-filename', filename)
-            .set('x-api-key', "invalid_API_key")
-			.send(testData);
+			.set('x-filename', filename)
+			.set('Content-Type', 'application/octet-stream')
+			.send(testData)
+			.expect(403)
+			.expect(res => {
+				if (res.body.code !== 'INVKEY') throw new Error('Expected INVKEY error code');
+			})
+			.end(done);
+	});
 
-		assert.strictEqual(res.status, 403);
-		assert.strictEqual(res.body.code, 'INVKEY');
+	it('should reject upload with INVALID x-api-key header (403)', done => {
+		request(app)
+			.post(`/upload/${validFolder}`)
+			.set('x-filename', filename)
+			.set('x-api-key', 'invalid_API_key')
+			.set('Content-Type', 'application/octet-stream')
+			.send(testData)
+			.expect(403)
+			.expect(res => {
+				if (res.body.code !== 'INVKEY') throw new Error('Expected INVKEY error code');
+			})
+			.end(done);
 	});
 });
+
 
 describe('DELETE /remove/:folder/:name', () => {
-    const validFolder = 'test-folder';
+	const validFolder = 'test-folder';
 	const invalidFolder = 'notallowed';
-    const filename = 'test-image.jpg';
-    const testData = Buffer.from('fake image data from string.');
-    const testPath = path.join(baseDir, validFolder, filename);
-    const invalidTestPath = path.join(baseDir, invalidFolder, filename);
+	const filename = 'test-image.jpg';
+	const testData = Buffer.from('fake image data from string.');
+	const testPath = path.join(baseDir, validFolder, filename);
+	const invalidTestPath = path.join(baseDir, invalidFolder, filename);
 
-    before(() => { 
-        request(app)
-            .post(`/upload/${validFolder}`)
-            .set('x-filename', filename)
-            .set('x-api-key', API_KEY)
-            .set('Content-Type', 'application/octet-stream')
-            .send(testData);
-    });
-    after(() => { 
-        if (fs.existsSync(testPath)) fs.unlinkSync(testPath); 
-        if (fs.existsSync(invalidTestPath)) fs.unlinkSync(invalidTestPath); 
-    });
+	before(done => {
+		request(app)
+			.post(`/upload/${validFolder}`)
+			.set('x-filename', filename)
+			.set('x-api-key', API_KEY)
+			.set('Content-Type', 'application/octet-stream')
+			.send(testData)
+			.expect(200)
+			.end(done);
+	});
 
-    it('should reject delete when no file (404)', async () => {
-		const res = await request(app)
+	after(() => {
+		if (fs.existsSync(testPath)) fs.unlinkSync(testPath);
+		if (fs.existsSync(invalidTestPath)) fs.unlinkSync(invalidTestPath);
+	});
+
+	it('should reject delete when no file (404)', done => {
+		request(app)
 			.delete(`/remove/${validFolder}/invalidFilename`)
-            .set('x-api-key', API_KEY)
-			.send();
-
-        console.log(res.body.code);
-		assert.strictEqual(res.status, 404);
-		assert.strictEqual(res.body.code, 'FNF');
+			.set('x-api-key', API_KEY)
+			.send()
+			.expect(404)
+			.expect(res => {
+				if (res.body.code !== 'FNF') throw new Error('Expected FNF error code');
+			})
+			.end(done);
 	});
 
-	it('should reject delete from an invalid folder (400)', async () => {
-		const res = await request(app)
+	it('should reject delete from an invalid folder (400)', done => {
+		request(app)
 			.delete(`/remove/${invalidFolder}/${filename}`)
-            .set('x-api-key', API_KEY)
-			.send();
-
-        console.log(res.body.code);
-
-		assert.strictEqual(res.status, 400);
-		assert.strictEqual(res.body.code, 'INVFLDR');
+			.set('x-api-key', API_KEY)
+			.send()
+			.expect(400)
+			.expect(res => {
+				if (res.body.code !== 'INVFLDR') throw new Error('Expected INVFLDR error code');
+			})
+			.end(done);
 	});
 
-    it('should reject upload with NO x-api-key header (403)', async () => {
-		const res = await request(app)
+	it('should reject delete with NO x-api-key header (403)', done => {
+		request(app)
 			.delete(`/remove/${validFolder}/${filename}`)
-			.send();
-
-        console.log(res.body.code);
-
-
-		assert.strictEqual(res.status, 403);
-		assert.strictEqual(res.body.code, 'INVKEY');
+			.send()
+			.expect(403)
+			.expect(res => {
+				if (res.body.code !== 'INVKEY') throw new Error('Expected INVKEY error code');
+			})
+			.end(done);
 	});
 
-    it('should reject upload with INVALID x-api-key header (403)', async () => {
-		const res = await request(app)
+	it('should reject delete with INVALID x-api-key header (403)', done => {
+		request(app)
 			.delete(`/remove/${validFolder}/${filename}`)
-            .set('x-api-key', "invalid_API_key")
-			.send();
-
-        console.log(res.body.code);
-
-
-		assert.strictEqual(res.status, 403);
-		assert.strictEqual(res.body.code, 'INVKEY');
+			.set('x-api-key', 'invalid_API_key')
+			.send()
+			.expect(403)
+			.expect(res => {
+				if (res.body.code !== 'INVKEY') throw new Error('Expected INVKEY error code');
+			})
+			.end(done);
 	});
 });
+
 
 describe('GET /image/:folder/:name', () => {
 
