@@ -4,7 +4,6 @@ require('dotenv').config();
 
 const {
     InvalidFolderError,
-    InvalidFilenameError,
     FileNotFoundError
 } = require('../config/errors');
 
